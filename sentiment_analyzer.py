@@ -277,7 +277,20 @@ def get_sentiment_breakdown(text):
     Returns:
         pandas.DataFrame: DataFrame with sentence analysis
     """
-    sentences = nltk.sent_tokenize(text)
+    # Split text into sentences manually instead of using nltk.sent_tokenize
+    # to avoid dependency on punkt_tab
+    sentences = []
+    for part in text.split('.'):
+        if part.strip():
+            sentences.append(part.strip() + '.')
+    
+    # Alternative sentence splitting for more complex cases
+    if not sentences:
+        sentences = [s.strip() for s in re.split(r'[.!?]+', text) if s.strip()]
+    
+    # If still no sentences (or very short text), just use the whole text
+    if not sentences:
+        sentences = [text]
     
     # Limit to first 5 sentences for performance
     sentences = sentences[:5]
@@ -319,6 +332,15 @@ def get_sentiment_breakdown(text):
             "sentiment": sentiment,
             "confidence": confidence,
             "entities": entities
+        })
+    
+    # If no results, add a placeholder row
+    if not results:
+        results.append({
+            "sentence": "No sentences to analyze",
+            "sentiment": "Neutral",
+            "confidence": 50,
+            "entities": "No entities detected"
         })
     
     return pd.DataFrame(results)
